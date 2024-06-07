@@ -186,8 +186,8 @@ impl<T: Copy, const N: usize> From<&[T]> for FixedQueue<T, N> {
 }
 
 impl<T: PartialEq, const N: usize> PartialEq for FixedQueue<T, N> {
-    fn eq(&self, other: &Self) -> bool {
-        if other.capacity() != N || other.len != self.len {
+    fn eq(&self, other: &FixedQueue<T, N>) -> bool {
+        if other.len != self.len {
             return false;
         }
         let mut is_not_eq = false;
@@ -200,7 +200,7 @@ impl<T: PartialEq, const N: usize> PartialEq for FixedQueue<T, N> {
 
 impl<T: PartialEq, const N: usize, const M: usize> PartialEq<[T; M]> for FixedQueue<T, N> {
     fn eq(&self, other: &[T; M]) -> bool {
-        if M != self.len() {
+        if M != self.len {
             return false;
         }
         (0..M).all(|x| self.buffer[(self.head + x) % N].as_ref() == Some(&other[x]))
