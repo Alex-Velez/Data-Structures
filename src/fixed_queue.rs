@@ -190,11 +190,7 @@ impl<T: PartialEq, const N: usize> PartialEq for FixedQueue<T, N> {
         if other.len != self.len {
             return false;
         }
-        let mut is_not_eq = false;
-        for x in 0..N {
-            is_not_eq |= !(self.buffer[(self.head + x) % N] == other.buffer[(other.head + x) % N])
-        }
-        !is_not_eq
+        (0..N).all(|x| self.buffer[(self.head + x) % N] == other.buffer[(other.head + x) % N])
     }
 }
 
