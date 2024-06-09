@@ -1,6 +1,6 @@
 use std::{
     fmt::{Debug, Display},
-    ops::Index,
+    ops::{Index, Range},
 };
 
 /// Fixed Size Queue:
@@ -214,6 +214,37 @@ impl<T, const N: usize> Index<usize> for FixedQueue<T, N> {
     }
 }
 
+impl<T, const N: usize> Index<Range<usize>> for FixedQueue<T, N>
+where
+    T: Copy + Default,
+{
+    type Output = [T];
+
+    fn index(&self, range: Range<usize>) -> &Self::Output {
+        let start = range.start;
+        let end = range.end;
+
+        // check bounds
+        assert!(start <= end && end <= self.len, "Index out of bounds");
+
+        // create temporary array to store the results
+        let mut temp = Vec::with_capacity(end - start);
+
+        for i in start..end {
+            let idx = (self.head + i) % N;
+            if let Some(value) = self.buffer[idx] {
+                temp.push(value);
+            }
+        }
+
+        // Return a slice from the temporary array
+        // SAFETY: This is safe because temp will live long enough within this function call.
+        let result = unsafe { std::slice::from_raw_parts(temp.as_ptr(), temp.len()) };
+        std::mem::forget(temp);
+        result
+    }
+}
+
 impl<T: Display, const N: usize> Display for FixedQueue<T, N> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.len == 0 {
@@ -334,6 +365,24 @@ mod test {
         let s = FixedQueue::<i32, 3>::from(&array[..]);
         let t = FixedQueue::<i32, 3>::with([Some(3i32), Some(2i32), Some(1i32)], 0, 0, 3);
         assert_eq!(s, t);
+    }
+
+    #[test]
+    fn index() {
+        let x = FixedQueue::<&str, 3>::from(["a", "b", "c"]);
+        assert_eq!(x[0], Some("a"));
+        assert_eq!(x[1], Some("b"));
+        assert_eq!(x[2], Some("c"));
+        assert_eq!(x[3], None);
+    }
+
+    #[test]
+    fn index_range() {
+        let x = FixedQueue::<&str, 3>::from(["a", "b", "c"]);
+        assert!(x[0..0].is_empty());
+        assert_eq!(x[0..1], ["a"]);
+        assert_eq!(x[0..2], ["a", "b"]);
+        assert_eq!(x[0..3], ["a", "b", "c"]);
     }
 
     #[test]
@@ -472,15 +521,6 @@ mod test {
         let mut y = FixedQueue::<&str, 3>::from(["a", "b", "c"]);
         y.pop();
         assert_eq!(y.to_option_array(), [Some("b"), Some("c"), None])
-    }
-
-    #[test]
-    fn index() {
-        let x = FixedQueue::<&str, 3>::from(["a", "b", "c"]);
-        assert_eq!(x[0], Some("a"));
-        assert_eq!(x[1], Some("b"));
-        assert_eq!(x[2], Some("c"));
-        assert_eq!(x[3], None);
     }
 
     #[test]
