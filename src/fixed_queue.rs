@@ -58,21 +58,25 @@ impl<T, const N: usize> FixedQueue<T, N> {
     }
 
     /// Return the max capacity of the FixedQueue.
+    #[inline]
     pub const fn capacity(&self) -> usize {
         N
     }
 
     /// Returns the number of elements in the FixedQueue.
+    #[inline]
     pub const fn len(&self) -> usize {
         self.len
     }
 
     /// Check if the queue is empty.
+    #[inline]
     pub const fn is_empty(&self) -> bool {
         self.len == 0
     }
 
     /// Check if the queue is full.
+    #[inline]
     pub const fn is_full(&self) -> bool {
         self.len == N
     }
@@ -212,7 +216,7 @@ impl<T, const N: usize> Index<usize> for FixedQueue<T, N> {
 
     fn index(&self, index: usize) -> &Self::Output {
         if index >= N {
-            return &None;
+            panic!("Index out of bounds");
         }
         &self.buffer[(self.head + index) % N]
     }
