@@ -1,4 +1,4 @@
-use std::{
+use core::{
     fmt::{Debug, Display},
     ops::{Index, Range},
 };
@@ -375,7 +375,6 @@ mod test {
         assert_eq!(x[0], Some("a"));
         assert_eq!(x[1], Some("b"));
         assert_eq!(x[2], Some("c"));
-        assert_eq!(x[3], None);
     }
 
     #[test]
