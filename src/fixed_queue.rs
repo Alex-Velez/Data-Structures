@@ -33,7 +33,7 @@ pub struct FixedQueue<T, const N: usize> {
 }
 
 impl<T, const N: usize> FixedQueue<T, N> {
-    /// Create a new FixedQueue with given fields
+    /// Create a new FixedQueue with given fields.
     #[inline]
     const fn with(
         buffer: [Option<T>; N],
@@ -49,7 +49,7 @@ impl<T, const N: usize> FixedQueue<T, N> {
         }
     }
 
-    /// Create a new FixedQueue with a given capacity
+    /// Create a new FixedQueue with a given capacity.
     pub const fn new() -> FixedQueue<T, N>
     where
         Option<T>: Copy,
@@ -57,27 +57,27 @@ impl<T, const N: usize> FixedQueue<T, N> {
         FixedQueue::with([None; N], 0, 0, 0)
     }
 
-    /// Return the max capacity of the FixedQueue
+    /// Return the max capacity of the FixedQueue.
     pub const fn capacity(&self) -> usize {
         N
     }
 
-    /// Returns the number of elements in the FixedQueue
+    /// Returns the number of elements in the FixedQueue.
     pub const fn len(&self) -> usize {
         self.len
     }
 
-    /// Check if the queue is empty
+    /// Check if the queue is empty.
     pub const fn is_empty(&self) -> bool {
         self.len == 0
     }
 
-    /// Check if the queue is full
+    /// Check if the queue is full.
     pub const fn is_full(&self) -> bool {
         self.len == N
     }
 
-    /// Removes all elements from the queue
+    /// Removes all elements from the queue.
     pub fn clear(&mut self) {
         for i in 0..N {
             drop(self.buffer[i].take());
@@ -87,7 +87,7 @@ impl<T, const N: usize> FixedQueue<T, N> {
         self.len = 0;
     }
 
-    /// Fills the queue with an element
+    /// Fills the queue with an element.
     pub fn fill(&mut self, item: T)
     where
         Option<T>: Copy,
@@ -117,7 +117,7 @@ impl<T, const N: usize> FixedQueue<T, N> {
         return overwritten;
     }
 
-    /// Removes and returns the oldest element from the queue
+    /// Removes and returns the oldest element from the queue.
     #[inline]
     pub fn pop(&mut self) -> Option<T>
     where
@@ -132,7 +132,7 @@ impl<T, const N: usize> FixedQueue<T, N> {
         popped
     }
 
-    /// Converts the queue into its array equivalent
+    /// Converts the queue into its array equivalent.
     pub fn to_option_array(self) -> [Option<T>; N]
     where
         Option<T>: Copy,
@@ -144,7 +144,7 @@ impl<T, const N: usize> FixedQueue<T, N> {
         arr
     }
 
-    /// Converts the queue into its vec equivalent
+    /// Converts the queue into its vec equivalent.
     pub fn to_vec(self) -> Vec<T>
     where
         T: Copy,
@@ -160,32 +160,35 @@ impl<T, const N: usize> FixedQueue<T, N> {
 }
 
 impl<T, const N: usize> From<[T; N]> for FixedQueue<T, N> {
+    /// Creates a FixedQueue from a fixed size array.
     fn from(array: [T; N]) -> Self {
         FixedQueue::with(array.map(Some), 0, 0, N)
     }
 }
 
 impl<T: Copy, const N: usize> From<&[T; N]> for FixedQueue<T, N> {
+    /// Creates a FixedQueue from a fixed size slice.
     fn from(array: &[T; N]) -> Self {
         FixedQueue::with(array.map(Some), 0, 0, N)
     }
 }
 
 impl<T: Copy, const N: usize> From<&[T]> for FixedQueue<T, N> {
-    /// Converts to this type from the input type. Copies a maximum of N
+    /// Creates a FixedQueue from an unsized slice. Copies a maximum of N
     /// elements of the slice, and a minimum of the slice length into the
-    /// queue.
+    /// queue. {[0, 0], 0} - [0, 0]
     fn from(array: &[T]) -> Self {
         let mut buf: [Option<T>; N] = [None; N];
         let length = N.min(array.len());
         for i in 0..length {
             buf[i] = Some(array[i]);
         }
-        FixedQueue::with(buf, 0, 0, length)
+        FixedQueue::with(buf, 0, array.len() - 1, length)
     }
 }
 
 impl<T: PartialEq, const N: usize> PartialEq for FixedQueue<T, N> {
+    /// This method tests if a FixedQueue is equal to another FixedQueue.
     fn eq(&self, other: &FixedQueue<T, N>) -> bool {
         if other.len != self.len {
             return false;
@@ -195,6 +198,7 @@ impl<T: PartialEq, const N: usize> PartialEq for FixedQueue<T, N> {
 }
 
 impl<T: PartialEq, const N: usize, const M: usize> PartialEq<[T; M]> for FixedQueue<T, N> {
+    /// This method tests if a FixedQueue is equal to a fixed size array.
     fn eq(&self, other: &[T; M]) -> bool {
         if M != self.len {
             return false;
@@ -252,25 +256,19 @@ impl<T: Display, const N: usize> Display for FixedQueue<T, N> {
         }
         write!(f, "{{")?;
         for x in 0..(self.len - 1) {
-            unsafe {
-                // All elements are guaranteed to be 'Some()'
-                let e = self
-                    .buffer
-                    .get_unchecked((self.head + x) % N)
-                    .as_ref()
-                    .unwrap_unchecked();
-                write!(f, "{}, ", e)?;
-            }
+            write!(
+                f,
+                "{}, ",
+                self.buffer[(self.head + x) % N].as_ref().unwrap()
+            )?;
         }
-        unsafe {
-            // Last element is guaranteed to be 'Some()'
-            let e = self
-                .buffer
-                .get_unchecked((self.head + self.len - 1) % N)
+        write!(
+            f,
+            "{}}}",
+            self.buffer[(self.head + self.len - 1) % N]
                 .as_ref()
-                .unwrap_unchecked();
-            write!(f, "{}}}", e)
-        }
+                .unwrap()
+        )
     }
 }
 
